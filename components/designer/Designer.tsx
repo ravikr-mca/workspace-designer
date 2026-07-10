@@ -84,6 +84,23 @@ export default function Designer() {
                 </p>
               </div>
             )}
+            {!empty && (
+              <button
+                onClick={() => dispatch({ type: "clear" })}
+                aria-label="Reset all selections"
+                className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/70 px-3 py-1.5 text-[12px] font-semibold text-cream backdrop-blur-sm transition-colors hover:bg-ink"
+              >
+                <svg viewBox="0 0 16 16" className="h-3 w-3" aria-hidden="true">
+                  <path
+                    d="M13 3 L3 13 M3 3 L13 13"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Reset
+              </button>
+            )}
           </div>
           <div className="pt-3">
             <BundlePicker onApply={(itemIds) => dispatch({ type: "applyBundle", itemIds })} />

@@ -21,15 +21,16 @@ const DESK_SURFACE: Record<string, number> = {
   "desk-teak": 188,
 };
 
-const SURFACE_ORDER = [
-  "deskplant",
-  "macbook",
-  "mon-24",
-  "mon-27",
-  "mon-studio",
-  "headphones",
-  "desklamp",
-];
+/* Screens always sit in the centre; side accessories flank them */
+const MONITOR_IDS = new Set(["macbook", "mon-24", "mon-27", "mon-studio"]);
+const SCREEN_ORDER = ["macbook", "mon-24", "mon-27", "mon-studio"];
+const SIDE_ORDER = ["deskplant", "headphones", "desklamp"];
+/* Which side each accessory prefers when flanking the monitor group */
+const SIDE_PREF: Record<string, "left" | "right"> = {
+  deskplant: "left",
+  headphones: "right",
+  desklamp: "right",
+};
 
 interface Placement {
   id: string;
@@ -55,44 +56,116 @@ function computePlacements(state: SetupState): Placement[] {
     placements.push({ id: state.deskId, x: DESK_POS.x, y: DESK_POS.y, scale: 1 });
   }
 
-  /* Auto-arrange the desk back line: distribute selected surface items
-     across the desktop, shrinking gently if it gets crowded. The keyboard
-     and mug (fixed front-edge items) share the same scale factor so a
-     packed desk shrinks as one consistent group instead of mixing
-     full-size front items with a shrunken back row. */
-  const surface = SURFACE_ORDER.filter((id) => state.accessoryIds.includes(id));
+  /* Surface layout: monitors/laptop stay centred; side items flank them.
+     surfaceScale is derived from all back-row items combined so everything
+     shrinks as one consistent group when the desk gets crowded. */
+  const screens = SCREEN_ORDER.filter((id) => state.accessoryIds.includes(id));
+  const sideAll = SIDE_ORDER.filter((id) => state.accessoryIds.includes(id));
+
+  /* Auto-balance: if every side item prefers the right and there are ≥2,
+     move the first one left so the arrangement doesn't overflow. */
+  let leftItems = sideAll.filter((id) => (SIDE_PREF[id] ?? "left") === "left");
+  let rightItems = sideAll.filter((id) => (SIDE_PREF[id] ?? "right") === "right");
+  if (leftItems.length === 0 && rightItems.length >= 2) {
+    leftItems = [rightItems[0]];
+    rightItems = rightItems.slice(1);
+  }
+
+  /* Scale so that neither side overflows the usable desk half-width (200 px
+     from centre = 400 px total, giving ≈30 px margin per side on a 460 px desk).
+     Scale is derived from the actual asymmetric extents, not a symmetric span,
+     so an all-right side doesn't push items off the edge. */
+  const MIN_GAP = 10;
   let surfaceScale = 1;
-  if (surface.length > 0) {
-    const span = 440;
-    const minGap = 8;
-    const widths = surface.map((id) => SCENE_ITEMS[id].width);
-    const total = widths.reduce((a, b) => a + b, 0);
-    const needed = total + minGap * (surface.length + 1);
-    surfaceScale = needed > span ? span / needed : 1;
-    const gap =
-      surfaceScale === 1 ? (span - total) / (surface.length + 1) : minGap * surfaceScale;
+
+  if (screens.length > 0 || sideAll.length > 0) {
+    const screenW1 =
+      screens.reduce((s, id) => s + SCENE_ITEMS[id].width, 0) +
+      MIN_GAP * Math.max(0, screens.length - 1);
+    const leftW1 =
+      leftItems.reduce((s, id) => s + SCENE_ITEMS[id].width, 0) +
+      MIN_GAP * leftItems.length;
+    const rightW1 =
+      rightItems.reduce((s, id) => s + SCENE_ITEMS[id].width, 0) +
+      MIN_GAP * rightItems.length;
+    const halfScreen = screenW1 / 2;
+    const maxExt = Math.max(halfScreen + leftW1, halfScreen + rightW1, 1);
+    const deskHalf = 200;
+    surfaceScale = maxExt > deskHalf ? deskHalf / maxExt : 1;
+  }
+
+  const itemGap = MIN_GAP * surfaceScale;
+
+  /* CSS transform-origin defaults to the element's visual centre (50% 50%).
+     When motion.g applies scale < 1, the visual bottom of each item rises by
+     height/2*(1-scale) above surfaceY. Compensate by shifting y downward so
+     the item's bottom stays exactly on the desk surface regardless of scale. */
+  function snapY(id: string, base: number, sc: number): number {
+    return base + (SCENE_ITEMS[id].height / 2) * (1 - sc);
+  }
+
+  if (screens.length > 0) {
+    /* Centre the screen group at DESK_POS.x */
+    const screenW =
+      screens.reduce((s, id) => s + SCENE_ITEMS[id].width * surfaceScale, 0) +
+      itemGap * Math.max(0, screens.length - 1);
+    const groupLeft = DESK_POS.x - screenW / 2;
+    const groupRight = DESK_POS.x + screenW / 2;
+
+    let cx = groupLeft;
+    screens.forEach((id) => {
+      const w = SCENE_ITEMS[id].width * surfaceScale;
+      placements.push({ id, x: cx + w / 2, y: snapY(id, surfaceY, surfaceScale), scale: surfaceScale });
+      cx += w + itemGap;
+    });
+
+    /* Left side: placed right-to-left just before the screen group */
+    let lx = groupLeft - itemGap;
+    [...leftItems].reverse().forEach((id) => {
+      const w = SCENE_ITEMS[id].width * surfaceScale;
+      lx -= w;
+      placements.push({ id, x: lx + w / 2, y: snapY(id, surfaceY, surfaceScale), scale: surfaceScale });
+      lx -= itemGap;
+    });
+
+    /* Right side: placed left-to-right just after the screen group */
+    let rx = groupRight + itemGap;
+    rightItems.forEach((id) => {
+      const w = SCENE_ITEMS[id].width * surfaceScale;
+      placements.push({ id, x: rx + w / 2, y: snapY(id, surfaceY, surfaceScale), scale: surfaceScale });
+      rx += w + itemGap;
+    });
+  } else if (sideAll.length > 0) {
+    /* No screens — spread side items evenly across the desk */
+    const totalW = sideAll.reduce((s, id) => s + SCENE_ITEMS[id].width * surfaceScale, 0);
+    const span = 380;
+    const gap = (span - totalW) / (sideAll.length + 1);
     let cursor = DESK_POS.x - span / 2 + gap;
-    surface.forEach((id, i) => {
-      const w = widths[i] * surfaceScale;
-      placements.push({ id, x: cursor + w / 2, y: surfaceY, scale: surfaceScale });
+    sideAll.forEach((id) => {
+      const w = SCENE_ITEMS[id].width * surfaceScale;
+      placements.push({ id, x: cursor + w / 2, y: snapY(id, surfaceY, surfaceScale), scale: surfaceScale });
       cursor += w + gap;
     });
   }
 
   if (state.accessoryIds.includes("keyboard")) {
+    const kbScale = surfaceScale;
+    const kbBase = surfaceY + 14 * kbScale;
     placements.push({
       id: "keyboard",
       x: 588,
-      y: surfaceY + 14 * surfaceScale,
-      scale: surfaceScale,
+      y: snapY("keyboard", kbBase, kbScale),
+      scale: kbScale,
     });
   }
   if (state.accessoryIds.includes("mug")) {
+    const mugScale = 0.9 * surfaceScale;
+    const mugBase = surfaceY + 12 * surfaceScale;
     placements.push({
       id: "mug",
       x: 762,
-      y: surfaceY + 12 * surfaceScale,
-      scale: 0.9 * surfaceScale,
+      y: snapY("mug", mugBase, mugScale),
+      scale: mugScale,
     });
   }
   if (state.chairId) {

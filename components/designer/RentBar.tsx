@@ -37,7 +37,7 @@ export default function RentBar({
         {!empty && (
           <button
             onClick={onClear}
-            className="hidden rounded-full px-3 py-2 text-sm font-medium text-ink-faint transition-colors duration-200 hover:bg-sand-deep hover:text-ink sm:block"
+            className="rounded-full px-3 py-2 text-sm font-medium text-ink-faint transition-colors duration-200 hover:bg-sand-deep hover:text-ink"
           >
             Clear
           </button>
