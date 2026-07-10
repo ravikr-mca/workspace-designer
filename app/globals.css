@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Warm Bali palette — tinted neutrals, terracotta accent, palm-ink text */
+  --sand: oklch(0.965 0.014 82);
+  --sand-deep: oklch(0.93 0.022 78);
+  --cream: oklch(0.985 0.007 86);
+  --ink: oklch(0.3 0.042 155);
+  --ink-soft: oklch(0.44 0.035 150);
+  --ink-faint: oklch(0.56 0.028 145);
+  --terracotta: oklch(0.62 0.155 42);
+  --terracotta-deep: oklch(0.53 0.148 40);
+  --terracotta-tint: oklch(0.94 0.035 48);
+  --sage: oklch(0.66 0.065 150);
+  --sage-tint: oklch(0.92 0.03 148);
+  --line: oklch(0.885 0.022 76);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-sand: var(--sand);
+  --color-sand-deep: var(--sand-deep);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-deep: var(--terracotta-deep);
+  --color-terracotta-tint: var(--terracotta-tint);
+  --color-sage: var(--sage);
+  --color-sage-tint: var(--sage-tint);
+  --color-line: var(--line);
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-instrument);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--sand);
+  color: var(--ink);
+  font-family: var(--font-instrument), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--terracotta-tint);
+  color: var(--terracotta-deep);
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--terracotta);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Ambient scene motion — disabled for reduced-motion users */
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+}
+
+@keyframes steam {
+  0% {
+    transform: translateY(0) scaleX(1);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-26px) scaleX(1.5);
+    opacity: 0;
+  }
+}
+
+.plant-sway {
+  animation: sway 6s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.steam-wisp {
+  animation: steam 3.2s ease-out infinite;
+}
+
+.steam-wisp.delay {
+  animation-delay: 1.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plant-sway,
+  .steam-wisp {
+    animation: none;
+  }
+  .steam-wisp {
+    opacity: 0;
+  }
+}
+
+/* Hide horizontal scrollbar on the mobile category rail without killing scroll */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
