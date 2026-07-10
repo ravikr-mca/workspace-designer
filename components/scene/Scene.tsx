@@ -12,11 +12,13 @@ import { P } from "./palette";
 const DESK_POS = { x: 600, y: 640 };
 const CHAIR_POS = { x: 600, y: 726 };
 
-/* Desk surface height above its base, per desk (top face y-offset) */
+/* Desk surface height above its base, per desk — must match the y of each
+   desk's top-face rect in items.tsx (not the underside of the slab), or
+   surface items render partially sunk into the desktop. */
 const DESK_SURFACE: Record<string, number> = {
-  "desk-standing": 168,
-  "desk-electric": 168,
-  "desk-teak": 168,
+  "desk-standing": 186,
+  "desk-electric": 184,
+  "desk-teak": 188,
 };
 
 const SURFACE_ORDER = [
@@ -38,7 +40,7 @@ interface Placement {
 
 function computePlacements(state: SetupState): Placement[] {
   const placements: Placement[] = [];
-  const surfaceY = DESK_POS.y - (state.deskId ? DESK_SURFACE[state.deskId] ?? 168 : 168);
+  const surfaceY = DESK_POS.y - (state.deskId ? DESK_SURFACE[state.deskId] ?? 186 : 186);
 
   if (state.accessoryIds.includes("rug")) {
     placements.push({ id: "rug", x: 600, y: 716, scale: 1 });
@@ -54,29 +56,44 @@ function computePlacements(state: SetupState): Placement[] {
   }
 
   /* Auto-arrange the desk back line: distribute selected surface items
-     across the desktop, shrinking gently if it gets crowded. */
+     across the desktop, shrinking gently if it gets crowded. The keyboard
+     and mug (fixed front-edge items) share the same scale factor so a
+     packed desk shrinks as one consistent group instead of mixing
+     full-size front items with a shrunken back row. */
   const surface = SURFACE_ORDER.filter((id) => state.accessoryIds.includes(id));
+  let surfaceScale = 1;
   if (surface.length > 0) {
-    const span = 432;
+    const span = 440;
+    const minGap = 8;
     const widths = surface.map((id) => SCENE_ITEMS[id].width);
     const total = widths.reduce((a, b) => a + b, 0);
-    const minGap = 10;
     const needed = total + minGap * (surface.length + 1);
-    const scale = needed > span ? span / needed : 1;
-    const gap = scale === 1 ? (span - total) / (surface.length + 1) : minGap * scale;
+    surfaceScale = needed > span ? span / needed : 1;
+    const gap =
+      surfaceScale === 1 ? (span - total) / (surface.length + 1) : minGap * surfaceScale;
     let cursor = DESK_POS.x - span / 2 + gap;
     surface.forEach((id, i) => {
-      const w = widths[i] * scale;
-      placements.push({ id, x: cursor + w / 2, y: surfaceY, scale });
+      const w = widths[i] * surfaceScale;
+      placements.push({ id, x: cursor + w / 2, y: surfaceY, scale: surfaceScale });
       cursor += w + gap;
     });
   }
 
   if (state.accessoryIds.includes("keyboard")) {
-    placements.push({ id: "keyboard", x: 588, y: surfaceY + 14, scale: 1 });
+    placements.push({
+      id: "keyboard",
+      x: 588,
+      y: surfaceY + 14 * surfaceScale,
+      scale: surfaceScale,
+    });
   }
   if (state.accessoryIds.includes("mug")) {
-    placements.push({ id: "mug", x: 762, y: surfaceY + 12, scale: 0.9 });
+    placements.push({
+      id: "mug",
+      x: 762,
+      y: surfaceY + 12 * surfaceScale,
+      scale: 0.9 * surfaceScale,
+    });
   }
   if (state.chairId) {
     placements.push({ id: state.chairId, x: CHAIR_POS.x, y: CHAIR_POS.y, scale: 1 });
@@ -104,12 +121,52 @@ export default function Scene({ state }: { state: SetupState }) {
       preserveAspectRatio="xMidYMax slice"
     >
       {/* room */}
+      <defs>
+        <radialGradient id="room-glow" cx="46%" cy="32%" r="75%">
+          <stop offset="0%" stopColor={P.wallDeep} stopOpacity={0} />
+          <stop offset="100%" stopColor={P.terracottaDark} stopOpacity={0.055} />
+        </radialGradient>
+        <linearGradient id="floor-fade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={P.floorShade} stopOpacity={0.5} />
+          <stop offset="100%" stopColor={P.floorShade} stopOpacity={0} />
+        </linearGradient>
+      </defs>
       <rect x={0} y={0} width={1200} height={624} fill={P.wall} />
+      {/* wainscoting band */}
+      <rect x={0} y={460} width={1200} height={160} fill={P.wallDeep} />
+      <rect x={0} y={456} width={1200} height={6} fill={P.panelLine} />
+      {Array.from({ length: 15 }, (_, i) => (
+        <line
+          key={i}
+          x1={i * 84 + 20}
+          y1={470}
+          x2={i * 84 + 20}
+          y2={616}
+          stroke={P.panelLine}
+          strokeWidth={2}
+          opacity={0.6}
+        />
+      ))}
       <rect x={0} y={596} width={1200} height={28} fill={P.wallShade} />
       <rect x={0} y={620} width={1200} height={180} fill={P.floor} />
+      {/* floorboards */}
+      {Array.from({ length: 10 }, (_, i) => (
+        <line
+          key={i}
+          x1={0}
+          y1={640 + i * 17}
+          x2={1200}
+          y2={640 + i * 17}
+          stroke={P.floorShade}
+          strokeWidth={1.5}
+          opacity={0.45}
+        />
+      ))}
       <rect x={0} y={620} width={1200} height={10} fill={P.floorShade} />
+      <rect x={0} y={620} width={1200} height={130} fill="url(#floor-fade)" />
+      <rect x={0} y={0} width={1200} height={800} fill="url(#room-glow)" />
 
-      {/* window with palm view */}
+      {/* window with curtains and a palm view */}
       <g>
         <defs>
           <clipPath id="window-view">
@@ -137,6 +194,23 @@ export default function Scene({ state }: { state: SetupState }) {
           {/* distant hill line */}
           <path d="M150 402 Q250 372 390 398 L390 430 L150 430 Z" fill={P.palm} opacity={0.28} />
         </g>
+        {/* sheer curtains, tied back at the sides */}
+        <path
+          d="M118 120 Q108 280 132 430 L154 430 Q132 280 142 120 Z"
+          fill={P.curtain}
+          opacity={0.92}
+        />
+        <path d="M122 130 Q116 280 136 424" stroke={P.curtainShade} strokeWidth={2} fill="none" opacity={0.7} />
+        <circle cx={134} cy={318} r={7} fill={P.terracotta} opacity={0.8} />
+        <path
+          d="M398 120 Q408 280 384 430 L406 430 Q422 280 412 120 Z"
+          fill={P.curtain}
+          opacity={0.92}
+        />
+        <path d="M406 130 Q414 280 400 424" stroke={P.curtainShade} strokeWidth={2} fill="none" opacity={0.7} />
+        <circle cx={396} cy={318} r={7} fill={P.terracotta} opacity={0.8} />
+        <rect x={110} y={110} width={310} height={10} rx={5} fill={P.windowFrame} />
+
         <path
           d="M150 430 L150 240 Q150 130 270 130 Q390 130 390 240 L390 430 Z"
           fill="none"
@@ -145,14 +219,26 @@ export default function Scene({ state }: { state: SetupState }) {
         />
         <line x1={270} y1={144} x2={270} y2={430} stroke={P.windowFrame} strokeWidth={10} />
         <line x1={157} y1={300} x2={383} y2={300} stroke={P.windowFrame} strokeWidth={10} />
+        <ellipse cx={270} cy={432} rx={128} ry={9} fill={P.shadow} opacity={0.5} />
       </g>
 
-      {/* framed print on the right wall */}
+      {/* framed print + floating shelf on the right wall */}
       <g>
-        <rect x={920} y={170} width={130} height={160} rx={6} fill={P.cream} stroke={P.windowFrame} strokeWidth={8} />
-        <path d="M940 300 Q970 220 1000 300" fill={P.terracotta} opacity={0.75} />
-        <circle cx={1012} cy={215} r={16} fill={P.sun} />
-        <path d="M936 250 Q985 235 1034 250" stroke={P.sage} strokeWidth={5} fill="none" />
+        <rect x={932} y={168} width={116} height={144} rx={5} fill={P.cream} stroke={P.windowFrame} strokeWidth={7} />
+        <path d="M950 288 Q978 218 1006 288" fill={P.terracotta} opacity={0.75} />
+        <circle cx={1016} cy={202} r={14} fill={P.sun} />
+        <path d="M946 244 Q990 230 1034 244" stroke={P.sage} strokeWidth={4.5} fill="none" />
+        <ellipse cx={990} cy={316} rx={62} ry={7} fill={P.shadow} opacity={0.4} />
+
+        {/* shelf with books + a little plant */}
+        <rect x={912} y={392} width={172} height={8} rx={3} fill={P.shelf} />
+        <rect x={914} y={400} width={168} height={4} fill={P.terracottaDark} opacity={0.25} />
+        <rect x={928} y={356} width={16} height={36} fill={P.bookRed} />
+        <rect x={946} y={350} width={14} height={42} fill={P.bookMustard} />
+        <rect x={962} y={360} width={15} height={32} fill={P.bookSage} />
+        <path d="M998 392 L998 372 Q998 358 1012 358 Q1026 358 1026 372 L1026 392 Z" fill={P.leaf} />
+        <rect x={1002} y={392} width={20} height={10} rx={3} fill={P.clay} />
+        <ellipse cx={996} cy={402} rx={78} ry={6} fill={P.shadow} opacity={0.35} />
       </g>
 
       {/* ghost hints while slots are empty */}

@@ -41,4 +41,13 @@ export const P = {
   jute: "#d8c294",
   juteDark: "#c4ab77",
   shadow: "rgba(90, 70, 40, 0.16)",
+
+  panelLine: "#e3d5b8",
+  wallDeep: "#ecdfc7",
+  curtain: "#f8ecd7",
+  curtainShade: "#eddcb9",
+  bookRed: "#b8563f",
+  bookSage: "#87a892",
+  bookMustard: "#d9a441",
+  shelf: "#b98a5e",
 };

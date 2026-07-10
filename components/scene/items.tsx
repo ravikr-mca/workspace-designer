@@ -260,15 +260,34 @@ function Headphones() {
 /* ── Lighting ── */
 
 function DeskLamp() {
+  /* Sits at the right end of the desk (last in SURFACE_ORDER) — arm and
+     shade lean back left, over the desk. Shade and glow cone share the
+     same two opening points so the light always lines up with the shade. */
+  const armEnd = { x: -20, y: -82 };
+  const openL = { x: -38, y: -62 };
+  const openR = { x: -4, y: -64 };
   return (
     <g>
       <ellipse cx={0} cy={-3} rx={22} ry={5} fill={P.ink} />
-      <path d="M0 -6 L-12 -62" stroke={P.ink} strokeWidth={5.5} strokeLinecap="round" />
-      <circle cx={-12} cy={-62} r={4.5} fill={P.terracotta} />
-      <path d="M-12 -62 L26 -88" stroke={P.ink} strokeWidth={5.5} strokeLinecap="round" />
-      {/* shade */}
-      <path d="M18 -96 L44 -78 L30 -64 Z" fill={P.terracotta} />
-      <path d="M22 -70 L64 -30 L30 -22 Z" fill={P.sun} opacity={0.32} />
+      <path d="M0 -6 L14 -56" stroke={P.ink} strokeWidth={5.5} strokeLinecap="round" />
+      <circle cx={14} cy={-56} r={4.5} fill={P.terracotta} />
+      <path
+        d={`M14 -56 L${armEnd.x} ${armEnd.y}`}
+        stroke={P.ink}
+        strokeWidth={5.5}
+        strokeLinecap="round"
+      />
+      {/* shade, apex fixed to the arm end */}
+      <path
+        d={`M${armEnd.x} ${armEnd.y} L${openL.x} ${openL.y} L${openR.x} ${openR.y} Z`}
+        fill={P.terracotta}
+      />
+      {/* glow, flaring from the exact shade opening */}
+      <path
+        d={`M${openL.x} ${openL.y} L${openR.x} ${openR.y} L-2 -26 L-58 -24 Z`}
+        fill={P.sun}
+        opacity={0.32}
+      />
     </g>
   );
 }
@@ -276,19 +295,19 @@ function DeskLamp() {
 function FloorLamp() {
   return (
     <g>
-      <ellipse cx={0} cy={-5} rx={36} ry={9} fill={P.ink} />
+      <ellipse cx={0} cy={-4} rx={27} ry={7} fill={P.ink} />
       <path
-        d="M0 -10 L0 -238 Q0 -282 -52 -282 L-116 -282"
+        d="M0 -8 L0 -288 C0 -324 -32 -338 -78 -338"
         stroke={P.metal}
-        strokeWidth={8}
+        strokeWidth={7}
         strokeLinecap="round"
         fill="none"
       />
       {/* dome shade */}
-      <path d="M-146 -282 A30 30 0 0 0 -86 -282 Z" fill={P.terracotta} />
-      <path d="M-146 -282 A30 30 0 0 1 -86 -282" fill={P.terracottaDark} opacity={0.4} />
-      <circle cx={-116} cy={-274} r={6} fill={P.sun} />
-      <path d="M-140 -270 L-92 -270 L-72 -196 L-160 -196 Z" fill={P.sun} opacity={0.2} />
+      <path d="M-104 -338 A26 26 0 0 0 -52 -338 Z" fill={P.terracotta} />
+      <path d="M-104 -338 A26 26 0 0 1 -52 -338" fill={P.terracottaDark} opacity={0.4} />
+      <circle cx={-78} cy={-331} r={5} fill={P.sun} />
+      <path d="M-98 -328 L-58 -328 L-44 -258 L-112 -258 Z" fill={P.sun} opacity={0.2} />
     </g>
   );
 }
@@ -296,27 +315,36 @@ function FloorLamp() {
 /* ── Comfort ── */
 
 function Monstera() {
+  /* Stems stay still (the plant's fixed structure); each leaf blade sways
+     independently on its own timer so it flutters rather than the whole
+     plant rocking as one rigid unit. */
   return (
     <g>
-      <g className="plant-sway">
-        <path d="M0 -46 Q-34 -92 -58 -138" stroke={P.leafDark} strokeWidth={5} fill="none" />
-        <path d="M0 -46 Q6 -110 44 -150" stroke={P.leafDark} strokeWidth={5} fill="none" />
-        <path d="M0 -46 Q-4 -86 -6 -108" stroke={P.leafDark} strokeWidth={5} fill="none" />
-        {/* big split leaves */}
+      <path d="M0 -46 Q-34 -92 -58 -138" stroke={P.leafDark} strokeWidth={5} fill="none" />
+      <path d="M0 -46 Q6 -110 44 -150" stroke={P.leafDark} strokeWidth={5} fill="none" />
+      <path d="M0 -46 Q-4 -86 -6 -108" stroke={P.leafDark} strokeWidth={5} fill="none" />
+      {/* big split leaves, each swaying on its own */}
+      <g className="plant-sway" style={{ animationDelay: "-0.6s" }}>
         <path
           d="M-58 -138 Q-96 -170 -70 -196 Q-38 -216 -34 -172 Q-32 -148 -58 -138 Z"
           fill={P.leaf}
         />
         <path d="M-58 -140 L-62 -186" stroke={P.leafDark} strokeWidth={3} />
+      </g>
+      <g className="plant-sway" style={{ animationDelay: "-3.4s" }}>
         <path
           d="M44 -150 Q52 -206 96 -196 Q120 -178 84 -152 Q62 -138 44 -150 Z"
           fill={P.leafDark}
         />
         <path d="M46 -152 L86 -178" stroke={P.leaf} strokeWidth={3} />
+      </g>
+      <g className="plant-sway" style={{ animationDelay: "-1.8s" }}>
         <path
           d="M-6 -108 Q-46 -128 -32 -160 Q-4 -178 8 -140 Q12 -118 -6 -108 Z"
           fill={P.leaf}
         />
+      </g>
+      <g className="plant-sway" style={{ animationDelay: "-4.5s" }}>
         <path
           d="M-4 -110 Q34 -134 58 -112 Q66 -84 24 -88 Q0 -92 -4 -110 Z"
           fill={P.leafDark}
@@ -332,12 +360,16 @@ function Monstera() {
 function DeskPlant() {
   return (
     <g>
-      <g className="plant-sway">
-        <path d="M0 -20 Q-12 -34 -8 -48" stroke={P.leafDark} strokeWidth={4} strokeLinecap="round" fill="none" />
-        <path d="M0 -20 Q12 -36 6 -50" stroke={P.leaf} strokeWidth={4} strokeLinecap="round" fill="none" />
-        <path d="M0 -20 Q0 -38 0 -44" stroke={P.sageDark} strokeWidth={4} strokeLinecap="round" fill="none" />
+      <path d="M0 -20 Q-12 -34 -8 -48" stroke={P.leafDark} strokeWidth={4} strokeLinecap="round" fill="none" />
+      <path d="M0 -20 Q12 -36 6 -50" stroke={P.leaf} strokeWidth={4} strokeLinecap="round" fill="none" />
+      <path d="M0 -20 Q0 -38 0 -44" stroke={P.sageDark} strokeWidth={4} strokeLinecap="round" fill="none" />
+      <g className="plant-sway" style={{ animationDelay: "-0.4s" }}>
         <circle cx={-8} cy={-50} r={5} fill={P.leaf} />
+      </g>
+      <g className="plant-sway" style={{ animationDelay: "-2.6s" }}>
         <circle cx={6} cy={-52} r={5} fill={P.leafDark} />
+      </g>
+      <g className="plant-sway" style={{ animationDelay: "-1.5s" }}>
         <circle cx={0} cy={-46} r={4.5} fill={P.sage} />
       </g>
       <path d="M-14 -22 L14 -22 L10 0 L-10 0 Z" fill={P.terracotta} />
@@ -390,7 +422,7 @@ export const SCENE_ITEMS: Record<string, SceneItem> = {
   keyboard: { kind: "front", width: 150, height: 26, render: Keyboard },
   headphones: { kind: "surface", width: 60, height: 72, render: Headphones },
   desklamp: { kind: "surface", width: 90, height: 104, render: DeskLamp },
-  floorlamp: { kind: "floor-right", width: 312, height: 300, render: FloorLamp },
+  floorlamp: { kind: "floor-right", width: 220, height: 380, render: FloorLamp },
   monstera: { kind: "floor-left", width: 250, height: 230, render: Monstera },
   deskplant: { kind: "surface", width: 44, height: 62, render: DeskPlant },
   rug: { kind: "rug", width: 660, height: 112, render: Rug },
