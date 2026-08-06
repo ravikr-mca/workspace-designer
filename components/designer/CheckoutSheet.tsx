@@ -266,7 +266,7 @@ export default function CheckoutSheet({
                     Confirm rental · {formatUSD(q.total)}
                   </button>
                   <p className="pt-2.5 text-center text-xs text-ink-faint">
-                    Free same-day delivery &amp; setup anywhere in Bali. Cancel anytime.
+                    Free same-day delivery &amp; setup anywhere in Dubai. Cancel anytime.
                   </p>
                 </div>
               </>

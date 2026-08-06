@@ -58,13 +58,13 @@ export default function Designer() {
       <header className="mx-auto flex w-full max-w-6xl items-baseline justify-between px-4 pb-3 pt-5 sm:px-6">
         <div className="flex items-baseline gap-2.5">
           <span className="font-display text-lg font-extrabold tracking-tight">
-            monis<span className="text-terracotta">.</span>rent
+            rent<span className="text-terracotta">.</span>wing
           </span>
           <span className="hidden text-sm text-ink-faint sm:block">workspace designer</span>
         </div>
         <p className="text-[13px] font-medium text-ink-faint">
           <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-sage" aria-hidden="true" />
-          Same-day delivery in Bali
+          Same-day delivery in Dubai
         </p>
       </header>
 

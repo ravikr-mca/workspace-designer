@@ -29,7 +29,7 @@ export default function RentBar({
               </p>
               <p className="truncate text-[13px] text-ink-faint">
                 {items.length} {items.length === 1 ? "item" : "items"} · free same-day delivery
-                in Bali
+                in Dubai
               </p>
             </>
           )}

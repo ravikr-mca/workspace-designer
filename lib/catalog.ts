@@ -44,7 +44,7 @@ export const PRODUCTS: Product[] = [
     name: "Classic Teak Desk",
     category: "desks",
     pricePerWeek: 5,
-    blurb: "Warm Balinese teak, deep drawers, zero wobble.",
+    blurb: "Warm teak, deep drawers, zero wobble.",
   },
   // Chairs — pick one
   {
@@ -154,7 +154,7 @@ export const PRODUCTS: Product[] = [
     name: "Ceramic Mug Set",
     category: "comfort",
     pricePerWeek: 1,
-    blurb: "For the Bali kopi that fuels the code.",
+    blurb: "For the Dubai kopi that fuels the code.",
   },
 ];
 

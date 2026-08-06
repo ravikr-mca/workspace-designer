@@ -15,9 +15,9 @@ const instrument = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Workspace Designer · monis.rent",
+  title: "Workspace Designer · rent.wing",
   description:
-    "Design your dream Bali workspace: pick a desk, a chair, monitors and more. Watch it come to life, then rent the whole setup with same-day delivery.",
+    "Design your dream Dubai workspace: pick a desk, a chair, monitors and more. Watch it come to life, then rent the whole setup with same-day delivery.",
 };
 
 export default function RootLayout({
